@@ -1,0 +1,239 @@
+kjutrzenka=> \d
+               List of relations
+ Schema |       Name       | Type  |   Owner
+--------+------------------+-------+------------
+ public | ceny             | table | kjutrzenka
+ public | dostawcy         | table | kjutrzenka
+ public | klienci          | table | kjutrzenka
+ public | ksiazki          | table | kjutrzenka
+ public | zamowienia       | table | kjutrzenka
+ public | zamowioneksiazki | table | kjutrzenka
+(6 rows)
+
+kjutrzenka=> SELECT * FROM zamowienia;
+ numerzam | numerkli |  datazam   | zamzrealizowane
+----------+----------+------------+-----------------
+        1 |        2 | 2022-10-23 | N
+        2 |        2 | 2022-09-02 | T
+        3 |        3 | 2023-01-20 | N
+        4 |        6 | 2022-02-23 | N
+        5 |        1 | 2022-03-10 | N
+        6 |        6 | 2022-08-27 | T
+        7 |        6 | 2025-01-05 | T
+(7 rows)
+
+kjutrzenka=> SELECT numerklin FROM zamowienia WHERE datazam = MIN(datazam);
+ERROR:  column "numerklin" does not exist
+LINE 1: SELECT numerklin FROM zamowienia WHERE datazam = MIN(datazam...
+               ^
+HINT:  Perhaps you meant to reference the column "zamowienia.numerkli".
+kjutrzenka=> SELECT numerkli FROM zamowienia WHERE datazam = MIN(datazam);
+ERROR:  aggregate functions are not allowed in WHERE
+LINE 1: SELECT numerkli FROM zamowienia WHERE datazam = MIN(datazam)...
+                                                        ^
+kjutrzenka=> ^C
+kjutrzenka=> SELECT numerkli FROM zamowienia WHERE datazam = (SELECT MIN(datazam) FROM
+ numerkli
+----------
+        6
+(1 row)
+
+kjutrzenka=> SELECT * FROM klienci;
+ numerkli | imie  | nazwisko |  adres   |  telefon
+----------+-------+----------+----------+-----------
+        2 | Jan   | Tym      | Gdynia   | 222233233
+        3 | Jan   | Nowak    | Sopot    | 422123456
+        4 | Adam  | Wat      | Warszawa |
+        5 | Ewa   | Zych     | Sopot    | 702206602
+        6 | Agata | Kot      | Opole    | 702206609
+        1 | Anna  | Nowacka  | Gdynia   |
+(6 rows)
+
+kjutrzenka=> SELECT imie, nazwisko klienci WHERE numerkli = SELECT (SELECT MIN(datazam
+ERROR:  syntax error at or near "SELECT"
+LINE 1: SELECT imie, nazwisko klienci WHERE numerkli = SELECT (SELEC...
+                                                       ^
+kjutrzenka=> SELECT imie, nazwisko klienci WHERE numerkli = (SELECT numerkli FROM klie
+ERROR:  column "imie" does not exist
+LINE 1: SELECT imie, nazwisko klienci WHERE numerkli = (SELECT numer...
+               ^
+kjutrzenka=> SELECT imie, nazwisko FROM klienci WHERE numerkli = (SELECT numerkli FROM
+ERROR:  column "datazam" does not exist
+LINE 1: ...RE numerkli = (SELECT numerkli FROM klienci WHERE datazam = ...
+                                                             ^
+kjutrzenka=> SELECT imie, nazwisko FROM klienci WHERE numerkli = (SELECT numerkli FROMLECT MIN(datazam) FROM zamowienia));
+ imie  | nazwisko
+-------+----------
+ Agata | Kot
+(1 row)
+
+kjutrzenka=> SELECT * FROM ksiazki;
+kjutrzenka=> SELECT * FROM ceny;
+ przedzial | dolna | gorna
+-----------+-------+-------
+         1 |  0.00 | 19.99
+         2 | 20.00 | 39.99
+         3 | 40.00 | 59.99
+         4 | 60.00 | 79.99
+         5 | 80.00 | 99.99
+(5 rows)
+
+kjutrzenka=> SELECT * FROM ksiazki;
+kjutrzenka=> SELECT DISTINCT wydawca FROM ksiazki AS k1 WHERE NOT EXISTS (SELECT 1 FROydawca=k1.wydawca);
+ERROR:  relation "ksiazk" does not exist
+LINE 1: ...ROM ksiazki AS k1 WHERE NOT EXISTS (SELECT 1 FROM ksiazk WHE...
+                                                             ^
+kjutrzenka=>
+kjutrzenka=> SELECT DISTINCT wydawca FROM ksiazki AS k1 WHERE NOT EXISTS (SELECT 1 FROwydawca=k1.wydawca);
+        wydawca
+------------------------
+
+ Wydawnictwo Marginesy
+ Wielka Litera
+ Rebis
+ MG
+ Znak
+ Echa
+ Albatros
+ Filtry
+ Świat Książki
+ W.A.B.
+ Wydawnictwo Poznańskie
+ Sine Qua Non
+(13 rows)
+
+kjutrzenka=> SELECT DISTINCT wydawca, (SELECT MAX(cena) FROM ksiazki WHERE k1.wydawca HERE NOT EXISTS (SELECT 1 FROM ksiazki WHERE cena <= 30 AND wydawca=k1.wydawca);
+        wydawca         |  max
+------------------------+-------
+ Albatros               | 37.10
+ Echa                   | 39.99
+ Filtry                 | 49.90
+ MG                     | 49.90
+ Rebis                  | 54.90
+ Sine Qua Non           | 39.99
+ Świat Książki          | 49.90
+ W.A.B.                 | 39.99
+ Wielka Litera          | 39.90
+ Wydawnictwo Marginesy  | 49.90
+ Wydawnictwo Poznańskie | 44.90
+ Znak                   | 79.90
+                        |
+(13 rows)
+
+kjutrzenka=> SELECT DISTINCT wydawca, (SELECT COUNT(tytul) FROM ksiazki WHERE wydawacaKS;
+ERROR:  column "wydawaca" does not exist
+LINE 1: ... wydawca, (SELECT COUNT(tytul) FROM ksiazki WHERE wydawaca =...
+                                                             ^
+HINT:  Perhaps you meant to reference the column "ksiazki.wydawca" or the column "ks.w
+kjutrzenka=> ^C
+kjutrzenka=> SELECT DISTINCT wydawca, (SELECT COUNT(tytul) FROM ksiazki WHERE wydawca = ks.wydawca) FROM ksiazki AS KS;
+        wydawca         | count
+------------------------+-------
+ Albatros               |     2
+ Echa                   |     1
+ Filtry                 |     1
+ MG                     |     1
+ Muza                   |     2
+ Noir Sur Blanc         |     1
+ Rebis                  |     1
+ Sine Qua Non           |     1
+ Świat Książki          |     1
+ W.A.B.                 |     2
+ Wielka Litera          |     1
+ Wydawnictwo Literackie |     4
+ Wydawnictwo Marginesy  |     1
+ Wydawnictwo Poznańskie |     1
+ Znak                   |     1
+                        |     0
+(16 rows)
+
+kjutrzenka=> SELECT * FROM zamowioneksiazki;
+ numerzam |       isbn        | ilosc
+----------+-------------------+-------
+        1 | 978-83-961-2648-1 |     3
+        1 | 978-83-775-8028-8 |     6
+        2 | 978-83-775-8028-8 |    15
+        2 | 978-83-080-6083-4 |     4
+        2 | 978-83-803-2171-7 |     1
+        6 | 978-83-961-2648-1 |     8
+        6 | 978-83-812-9662-5 |     4
+        6 | 978-83-080-6083-4 |    11
+        7 | 978-83-240-4563-1 |     3
+        7 | 978-83-68226-55-3 |     1
+(10 rows)
+
+kjutrzenka=> SELECT isbn FROM zamowioneksiazki AS zk WHERE 15 <
+kjutrzenka-> SELECT DISTINCT wydawca, (SELECT COUNT(tytul) FROM ksiazki WHERE wydawaca = ks.wydawca) FROM ksiazki AS KS;;
+ERROR:  syntax error at or near "SELECT"
+LINE 2: SELECT DISTINCT wydawca, (SELECT COUNT(tytul) FROM ksiazki W...
+        ^
+kjutrzenka=> SELECT DISTINCT isbn FROM zamowioneksiazki AS zam WHERE
+kjutrzenka-> (SELECT SUM(ilosc) FROM zamowionrksiazki WHERE isbn = zam.isbn);
+ERROR:  relation "zamowionrksiazki" does not exist
+LINE 2: (SELECT SUM(ilosc) FROM zamowionrksiazki WHERE isbn = zam.is...
+                                ^
+kjutrzenka=> SELECT DISTINCT isbn FROM zamowioneksiazki AS zam WHERE
+(SELECT SUM(ilosc) FROM zamowioneksiazki WHERE isbn = zam.isbn);
+ERROR:  argument of WHERE must be type boolean, not type numeric
+LINE 2: (SELECT SUM(ilosc) FROM zamowioneksiazki WHERE isbn = zam.is...
+        ^
+kjutrzenka=> ^C
+kjutrzenka=> SELECT DISTINCT isbn FROM zamowioneksiazki AS zam WHERE
+(SELECT SUM(ilosc) FROM zamowioneksiazki WHERE isbn = zam.isbn)> 15;
+       isbn
+-------------------
+ 978-83-775-8028-8
+(1 row)
+
+kjutrzenka=> SELECT tytul FROM ksiazki WHERE isbn IN (SELECT DISTINCT isbn FROM zamowioneksiazki AS zam WHERE
+(SELECT SUM(ilosc) FROM zamowioneksiazki WHERE isbn = zam.isbn)>= 15);
+       tytul
+-------------------
+ Wszystko, co lśni
+ Folwark zwierzęcy
+(2 rows)
+
+kjutrzenka=> SELECT DISTINCT isbn FROM zamowioneksiazki AS zam WHERE                  (SELECT SUM(ilosc) FROM zamowioneksiazki WHERE isbn = zam.isbn)>= 15;
+       isbn
+-------------------
+ 978-83-080-6083-4
+ 978-83-775-8028-8
+(2 rows)
+
+kjutrzenka=> SELECT * FROM dostawcy;
+ numerdost | nazwadost | adresdost | telefondost
+-----------+-----------+-----------+-------------
+         1 | Czytelni  | Warszawa  |   601601601
+         2 | Druki     | Katowice  |   606606606
+         3 | Bukinista | Opole     |   598765432
+         4 | ElLibro   | Warszawa  |   687654321
+         5 | Lyna      | Elbląg    |
+         6 | Czytam    | Elbląg    |
+         7 | Litera    | Opole     |
+(7 rows)
+
+kjutrzenka=> SELECT * FROM zamowioneksiazki;
+ numerzam |       isbn        | ilosc
+----------+-------------------+-------
+        1 | 978-83-961-2648-1 |     3
+        1 | 978-83-775-8028-8 |     6
+        2 | 978-83-775-8028-8 |    15
+        2 | 978-83-080-6083-4 |     4
+        2 | 978-83-803-2171-7 |     1
+        6 | 978-83-961-2648-1 |     8
+        6 | 978-83-812-9662-5 |     4
+        6 | 978-83-080-6083-4 |    11
+        7 | 978-83-240-4563-1 |     3
+        7 | 978-83-68226-55-3 |     1
+(10 rows)
+
+kjutrzenka=> SELECT adresdost FROM dostawcy WHERE
+kjutrzenka-> ;
+ERROR:  syntax error at or near ";"
+LINE 2: ;
+        ^
+kjutrzenka=> SELECT adresdost FROM dostawcy WHERE numerdost IN(SELECT DISTINCT COUNT(numerdost) FROM ksiazki WHERE (SELECT COUNT(numerdost) FROM ksiazki AS ki WHERE numerdost = ki.numerdost)>= 3);
+ adresdost
+-----------
+(0 rows)
+

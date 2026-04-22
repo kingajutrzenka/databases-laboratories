@@ -1,0 +1,117 @@
+kjutrzenka=> \d
+               List of relations
+ Schema |       Name       | Type  |   Owner
+--------+------------------+-------+------------
+ public | ceny             | table | kjutrzenka
+ public | dostawcy         | table | kjutrzenka
+ public | employees        | table | kjutrzenka
+ public | klienci          | table | kjutrzenka
+ public | ksiazki          | table | kjutrzenka
+ public | naprawy          | table | kjutrzenka
+ public | pojazdy          | table | kjutrzenka
+ public | uslugi           | table | kjutrzenka
+ public | zamowienia       | table | kjutrzenka
+ public | zamowioneksiazki | table | kjutrzenka
+(10 rows)
+
+kjutrzenka=> SELECT * FROM Employees
+kjutrzenka-> ;
+kjutrzenka=>
+kjutrzenka=> SELECT fullname, hiredate, COUNT(hiredate)
+kjutrzenka-> FROM employees
+kjutrzenka-> ;
+ERROR:  column "employees.fullname" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: SELECT fullname, hiredate, COUNT(hiredate)
+               ^
+kjutrzenka=> SELECT fullname, hiredate, COUNT(hiredate)OVER (PARTITION BY EXTRACT(year from hiredate))
+FROM employees;
+kjutrzenka=>
+kjutrzenka=> SELECT fullname, hiredate, COUNT(hiredate)OVER (PARTITION BY EXTRACT(year from hiredate))
+FROM employees;
+kjutrzenka=> SELECT fullname, hiredate, COUNT(hiredate)OVER (PARTITION BY EXTRACT(DOW from hiredate))
+FROM employees;
+kjutrzenka=> ^C
+kjutrzenka=> SELECT fullname, hiredate, TO_CHAR((hiredate, 'Day'), COUNT(PARTITION BY EXTRACT(DOW from hiredate))    FROM employees;
+kjutrzenka(>
+kjutrzenka(>
+kjutrzenka(>
+kjutrzenka(>
+kjutrzenka(>
+kjutrzenka(>
+kjutrzenka(> ;
+kjutrzenka(> ;
+kjutrzenka(> Q
+kjutrzenka(> Q
+kjutrzenka(> \
+invalid command \
+Try \? for help.
+kjutrzenka(>
+kjutrzenka(> ?
+kjutrzenka(> psql
+kjutrzenka(>
+\q
+kjutrzenka@sxterm:~$ psql
+psql (16.13 (Debian 16.13-1.pgdg12+1))
+Type "help" for help.
+
+kjutrzenka=> SELECT fullname, jobtitle, ROW_NUMBER() OVER (PARTITION BY jobtitle ORDER BY hiredate ASC) FROM employees;
+kjutrzenka=> SELECT * FROM employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German');
+kjutrzenka=> SELECT *  FROM employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German')
+kjutrzenka-> GROUP BY extract(YEAR FROM hiredate), language;
+ERROR:  column "employees.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: SELECT *  FROM employees WHERE language IN ('Finnish', 'Germ...
+               ^
+kjutrzenka=> SELECT extract(YEAR FROM hiredate), COUNT(fullname)  FROM employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German')
+GROUP BY extract(YEAR FROM hiredate), language;
+ extract | count
+---------+-------
+    2023 |     1
+    2022 |     1
+    2022 |     2
+    2022 |     1
+    2022 |     2
+    2023 |     1
+(6 rows)
+
+kjutrzenka=> SELECT extract(YEAR FROM hiredate), language, COUNT(fullname)  FROM employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German')
+GROUP BY extract(YEAR FROM hiredate), language;
+ extract | language  | count
+---------+-----------+-------
+    2023 | Mongolian |     1
+    2022 | Finnish   |     1
+    2022 | German    |     2
+    2022 | Mongolian |     1
+    2022 | Japanese  |     2
+    2023 | German    |     1
+(6 rows)
+
+kjutrzenka=> SELECT extract(YEAR FROM hiredate), language, COUNT(fullname)  FROM employees WHERE language IN ('Finnis
+GROUP BY extract(YEAR FROM hiredate), language
+kjutrzenka-> ORDER BY hiredate;
+ERROR:  column "employees.hiredate" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 3: ORDER BY hiredate;
+                 ^
+kjutrzenka=> SELECT extract(YEAR FROM hiredate) AS rok, language, COUNT(fullname) AS ile  FROM employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German')
+GROUP BY extract(YEAR FROM hiredate), language;
+ rok  | language  | ile
+------+-----------+-----
+ 2023 | Mongolian |   1
+ 2022 | Finnish   |   1
+ 2022 | German    |   2
+ 2022 | Mongolian |   1
+ 2022 | Japanese  |   2
+ 2023 | German    |   1
+(6 rows)
+
+kjutrzenka=> SELECT * FRIM crosstab(SELECT extract(YEAR FROM hiredate) AS rok, language, COUNT(fullname) AS ile  FROM employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German')
+GROUP BY extract(YEAR FROM hiredate), language);
+ERROR:  syntax error at or near "FRIM"
+LINE 1: SELECT * FRIM crosstab(SELECT extract(YEAR FROM hiredate) AS...
+                 ^
+kjutrzenka=> SELECT * FROM crosstab(SELECT extract(YEAR FROM hiredate) AS rok, language, COUNT(fullname) AS ile  FROM employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German')
+GROUP BY extract(YEAR FROM hiredate), language);
+ERROR:  syntax error at or near "SELECT"
+LINE 1: SELECT * FROM crosstab(SELECT extract(YEAR FROM hiredate) AS...
+                               ^
+kjutrzenka=> SELECT * FROM crosstab($$SELECT extract(YEAR FROM hiredate) AS rok, language, COUNT(fullname) AS ile  FROM employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German')
+GROUP BY extract(YEAR FROM hiredate), language ORDER BY 1,2$$, $$SELECT DISTINCT language from employees WHERE language IN ('Finnish', 'German', 'Japanese', 'Mongolian', 'German' $$) AS (rok integer

@@ -61,3 +61,48 @@ ON u.user_id = f.follows_id
 WHERE f.user_id = (SELECT user_id FROM users WHERE login = '@ljaskowicz2o');
 
 --12 analogiczne
+
+--13
+
+SELECT * FROM follows;
+SELECT * FROM users;
+
+SELECT f.user_id, u.login, COUNT(f.follows_id)
+FROM follows as f
+INNER JOIN users as u
+USING(user_id)
+GROUP BY f.user_id, u.login
+HAVING COUNT(f.follows_id) = (SELECT COUNT(follows_id) 
+							FROM follows 
+							GROUP BY user_id 
+							ORDER BY COUNT(follows_id) DESC
+							LIMIT 1)
+;
+
+--15
+
+SELECT * FROM tags;
+SELECT * FROM tagged;
+
+SELECT tweet_id, length(name)
+FROM tagged as td
+INNER JOIN tags as ts
+USING(tag_id)
+WHERE length(name) = (SELECT length(name)
+							FROM tags
+							ORDER BY length(name) DESC
+							LIMIT 1);
+
+--alternatywna wersja
+
+SELECT tweet_id, length(name)
+FROM tagged as td
+INNER JOIN tags as ts
+USING(tag_id)
+WHERE length(name) = (SELECT max(length(name)) FROM tags);
+
+--16.2
+
+SELECT * FROM tweets;
+SELECT COUNT(tweet)
+

@@ -106,3 +106,42 @@ WHERE length(name) = (SELECT max(length(name)) FROM tags);
 SELECT * FROM tweets;
 SELECT COUNT(tweet)
 
+---REKURENCJA
+
+--21. Wypisz identyfikatory ćwierków cytujących ćwierk (pośrednio lub bezpośrednio – do
+--trzeciego poziomu w głąb) o identyfikatorze 195.
+
+SELECT * FROM tweets;
+
+WITH RECURSIVE cwie AS(
+SELECT tweet_id, cites, ARRAY[tweet_id] AS wypisane, 0 AS poziom
+FROM tweets 
+WHERE tweet_id = 195
+UNION ALL
+SELECT t.tweet_id, t.cites, cwie.wypisane || t.tweet_id, poziom + 1
+FROM tweets as t
+INNER JOIN cwie
+ON t.cites = cwie.tweet_id
+WHERE NOT (t.tweet_id = ANY(cwie.wypisane)) AND poziom < 3)
+SELECT * FROM cwie WHERE tweet_id != 195;
+
+
+--22. Wypisz identyfikatory użytkowników obserwowanych (bezpośrednio lub pośrednio –
+--do drugiego poziomu obserwacji) przez użytkownika @ljaskowicz2o.
+
+SELECT * FROM follows;
+SELECT * FROM users;
+
+WITH RECURSIVE fol AS(
+SELECT user_id, follows_id, ARRAY[user_id] AS wypisane, 0 AS poziom
+FROM follows 
+WHERE user_id IN (SELECT user_id FROM users WHERE login = '@ljaskowicz2o')
+UNION ALL
+SELECT f.user_id, f.follows_id, wypisane || f.user_id, poziom + 1
+FROM follows AS f
+INNER JOIN fol
+ON f.user_id = fol.follows_id
+WHERE NOT (f.user_id = ANY(wypisane)) AND poziom <1
+)
+SELECT * FROM fol;
+
